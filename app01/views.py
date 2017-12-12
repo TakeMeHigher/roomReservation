@@ -125,10 +125,10 @@ def initBook(request):
             print(data)
             if date >= nowdate:
                 #判断del和add中有没有重复
-                for room_id in data.get("del"):
+                for room_id ,tm_list in data.get("del").items():
                     if room_id not  in data.get('add'):
                         continue
-                    for tm in data['del'][room_id]:
+                    for tm in list(tm_list):
                         if tm in data['add'][room_id]:
                             data['del'][room_id].remove(tm)
                             data['add'][room_id].remove(tm)
