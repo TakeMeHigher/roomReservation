@@ -48,10 +48,14 @@
         z-index: 1050;
         top: 20%;
         left: 35%;
-        height:400px;
+        height: 400px;
         width: 400px;
         margin: 0 0 0 -16px;
         background: url(/static/img/loading.gif);
+    }
+
+     #tbody > tr > .tmp {
+        background-color: yellow;
     }
 
 </style>
@@ -62,7 +66,7 @@
     <div class="row pull-left">
         <h1>会议室预定</h1>
     </div>
-
+    {% csrf_token %}
     <div class="row pull-right" style="margin-top: 30px">
         <div class='input-group ' style="width: 230px;float:left;">
             <input type='text' class="form-control" id='datetimepicker11' placeholder="请选择日期"/>
@@ -75,12 +79,13 @@
         <button class="btn btn-primary" id="saveBtn">保存</button>
     </div>
     <div class="row">
+        <div id="username">{{ request.session.user.name }}</div>
         <table class="table table-bordered">
             <thead>
             <tr>
                 <th>会议室</th>
                 {% for time in time_choices %}
-                    <td>{{ time.1 }}</td>
+                    <th>{{ time.1 }}</th>
                 {% endfor %}
             </tr>
             </thead>
@@ -131,7 +136,10 @@
 
     $(function () {
         initDatepicker();
-        initBookingInfo(new Date().Format('yyyy-MM-dd'))
+        initBookingInfo(new Date().Format('yyyy-MM-dd'));
+         tdBtn()
+        save()
+
     });
 
     function initDatepicker() {
@@ -175,12 +183,68 @@
                         $tr.append($td)
                     });
                     $("#tbody").append($tr)
-                })
+                });
 
-              $('#shade,#loading').addClass('hide');
+                $('#shade,#loading').addClass('hide');
             }
         })
     }
+
+    function tdBtn() {
+         $("#tbody").on('click', 'td[tm][fk!="true"]', function () {
+        $this = $(this);
+        var room_id = $(this).attr("roomid");
+        var tm = $this.attr('tm');
+        if ($this.hasClass('chosen')) {
+            r = confirm('你确定要取消吗？');
+            if (r) {
+                $this.empty()
+                $(this).removeClass('chosen');
+                if (SELECTED_ROOM.del[room_id]) {
+                    SELECTED_ROOM.del[room_id].push(tm)
+                } else {
+                    SELECTED_ROOM.del[room_id] = [tm]
+                }
+
+            }
+        } else if ($this.hasClass('tmp')) {
+            $(this).removeClass('tmp');
+            var index = SELECTED_ROOM.add[room_id].indexOf(tm);
+            if (index !== -1) {
+                SELECTED_ROOM.add[room_id].splice(index, 1)
+            }
+        } else {
+            $this.addClass('tmp');
+            if (SELECTED_ROOM.add[room_id]) {
+                SELECTED_ROOM.add[room_id].push(tm)
+            } else {
+                SELECTED_ROOM.add[room_id] = [tm]
+            }
+        }
+    })
+    }
+
+
+ function save() {
+     $("#saveBtn").click(function () {
+         alert(123)
+                $.ajax({
+                    url:'/initBook/',
+                    type:'POST',
+                    headers: {"X-CSRFToken": $.cookie('csrftoken')},
+                    data:{
+                        data:JSON.stringify(SELECTED_ROOM),
+                        date:CHOSEN_DATE
+                    },
+                    success:function (data) {
+                       initBookingInfo(CHOSEN_DATE)
+                    }
+                })
+            })
+ }
+
+
+
 </script>
 
 </html>
